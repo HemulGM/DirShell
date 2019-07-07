@@ -18,6 +18,8 @@ type
 
   end;
 
+  TBMPImages = TList<ID2D1Bitmap>;
+
   TFormPanel = class(TForm)
     ImageListIcons: TImageList;
     procedure FormPaint(Sender: TObject);
@@ -41,6 +43,7 @@ type
     FMouseCord: TPoint;
     FItemUnderMouse: Integer;
     FID: string;
+    FImages: TBMPImages;
     procedure CreateParams(var Params: TCreateParams); override;
     procedure SetID(const Value: string);
     procedure CreateWindowHandle(const Params: TCreateParams); override;
@@ -55,9 +58,9 @@ type
 
 const
   IconSpaceW = 5;
-  IconSpaceH = 2;
+  IconSpaceH = 10;
   IconWidth = 20 + 32 + 20;
-  IconHeight = 10 + 32 + 10 + 20 + 20;
+  IconHeight = 10 + 32 + 10 + 20 + 10;
   MainOffset: Integer = 0;
 
 var
@@ -71,7 +74,7 @@ uses Math, ShellDir.Manager, ShellApi;
 
 {$R *.dfm}
 
-function GetFileIcon(const FileName: TFileName; Size: Integer; IL: TCustomImageList): Integer;
+function GetFileIcon(const FileName: TFileName; Size: Integer; IL: TImageList): Integer;
 var
   Icon: TIcon;
   Icon32, Icon16, IcEx: HICON;
@@ -110,7 +113,7 @@ var Item: TShellItem;
 begin
   Item.FileName := FileName;
   Item.DisplayText := ExtractFileName(FileName);
-  Item.IconIndex :=  GetFileIcon(FileName, 32, ImageListIcons);
+  Item.IconIndex := GetFileIcon(FileName, 32, ImageListIcons);
   Result := FItems.Add(Item);
   FItems.Sort(TComparer<TShellItem>.Construct(
     function(const Left, Right: TShellItem): Integer
@@ -160,6 +163,7 @@ var
   i: Integer;
   Item: TShellItem;
 begin
+  FImages := TBMPImages.Create;
   DragAcceptFiles(Handle, True);
   FVertOffset := 0;
   FColCount := 1;
@@ -175,6 +179,8 @@ end;
 
 procedure TFormPanel.FormDestroy(Sender: TObject);
 begin
+  FImages.Clear;
+  FImages.Free;
   FItems.Clear;
   FItems.Free;
 end;
@@ -223,19 +229,15 @@ var
   C, R, W: Integer;
   S: string;
   Icon: TIcon;
-  BMP: TPNGGraphic;
   txSize: TSize;
+  PaintStruct: TPaintStruct;
 begin
-  BMP := TPNGGraphic.Create;
-  BMP.PixelFormat := pf32bit;
-  BMP.SetSize(ClientWidth, ClientHeight - MainOffset);
-  BMP.Canvas.Brush.Color := Color;
-  BMP.Canvas.FillRect(ClientRect);
-  with TDirect2DCanvas.Create(BMP.Canvas, ClientRect) do
+  BeginPaint(Handle, PaintStruct);
+  with TDirect2DCanvas.Create(Canvas, ClientRect) do
   begin
     BeginDraw;
+    RenderTarget.SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
     FItemUnderMouse := -1;
-    Pen.Style := psSolid;
     Pen.Brush.Handle.SetOpacity(0.5);
     for i := 0 to FItems.Count-1 do
     begin
@@ -258,53 +260,66 @@ begin
         RoundRect(ItemRect, 2, 2);
       end;
 
-      //Иконка
+    //end;
+  //end;
+  //with Canvas do
+  //begin
+    Font.Name := 'Segoe UI Light';
+    Font.Size := 10;
+    Pen.Style := psClear;
+    Brush.Style := bsClear;
+    //for i := 0 to FItems.Count - 1 do
+    //begin
+    {  C := i mod FColCount;
+      R := i div FColCount;
+      if FColCount > 1 then
+        ItemRect := TRect.Create(TPoint.Create(Round(C * (IconWidth + FIconSpaceW) + FIconSpaceW), R * (IconHeight + IconSpaceH) + 10), IconWidth, IconHeight)
+      else
+        ItemRect := TRect.Create(TPoint.Create(ClientWidth div 2 - IconWidth div 2, R * (IconHeight + IconSpaceH) + 10), IconWidth, IconHeight);
+      ItemRect.Offset(0, FVertOffset); }
+    //Иконка
       IconRect := ItemRect;
-      IconRect.Height := ItemRect.Height - 18;
+      IconRect.Height := ItemRect.Height - 25;
       Icon := TIcon.Create;
       ImageListIcons.GetIcon(FItems[i].IconIndex, Icon);
-      Draw(IconRect.CenterPoint.X-32 div 2, IconRect.CenterPoint.Y-32 div 2, Icon);
+      //ImageListIcons.Draw(Canvas, IconRect.CenterPoint.X - 32 div 2, IconRect.CenterPoint.Y - 32 div 2, FItems[i].IconIndex, True);
+      Draw(IconRect.CenterPoint.X - 32 div 2, IconRect.CenterPoint.Y - 32 div 2, Icon);
       Icon.Free;
 
-      //Подпись
+    //Подпись
       S := FItems[i].DisplayText;
-      Font.Name:= 'Segoe UI Light';
-      Font.Size := 10;
 
       TxtRect := ItemRect;
       TxtRect.Height := 38;
-      TxtRect.Offset(0 , IconHeight - TxtRect.Height);
+      TxtRect.Offset(0, IconHeight - TxtRect.Height);
       W := Min(ItemRect.Width - 10, TextWidth(S)) + 8;
       TxtRect.Left := TxtRect.Left + ItemRect.Width div 2 - W div 2;
       TxtRect.Width := W;
-
+           {
       //Выделение текста
-     { if PtInRect(ItemRect, FMouseCord) and MouseInClient then
+      if PtInRect(ItemRect, FMouseCord) and MouseInClient then
       begin
         Pen.Style := psClear;
         Brush.Style := bsSolid;
         Brush.Color := $00363535;
-        Brush.Handle.SetOpacity(1);
+        //Brush.Handle.SetOpacity(1);
         RoundRect(TxtRect, 4, 4);
-      end;   }
+      end;  }
 
-      Font.Brush.Handle.SetOpacity(0.9);
-      Brush.Style := bsClear;
+    //Font.Brush.Handle.SetOpacity(0.9);
       TxtRect.Offset(+1, +1);
       Font.Color := clBlack;
       TextRect(TxtRect, S, [tfVerticalCenter, tfWordBreak, tfCenter, tfEndEllipsis]);
 
       TxtRect.Offset(-1, -1);
-      Font.Brush.Handle.SetOpacity(1);
+    //Font.Brush.Handle.SetOpacity(1);
       Font.Color := clWhite;
       TextRect(TxtRect, S, [tfVerticalCenter, tfWordBreak, tfCenter, tfEndEllipsis]);
-
     end;
     EndDraw;
     Free;
   end;
-  Canvas.Draw(0, MainOffset, BMP);
-  BMP.Free;
+  EndPaint(Handle, PaintStruct);
 end;
 
 procedure TFormPanel.FormResize(Sender: TObject);
