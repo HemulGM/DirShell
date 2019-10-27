@@ -3,9 +3,10 @@ unit ShellDir.Settings;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus, Vcl.StdCtrls,
-  System.ImageList, Vcl.ImgList, HGM.Button;
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
+  Vcl.ExtCtrls, Vcl.Menus, Vcl.StdCtrls, System.ImageList, Vcl.ImgList,
+  HGM.Button;
 
 type
   TFormMain = class(TForm)
@@ -32,12 +33,16 @@ var
   FormMain: TFormMain;
 
 implementation
+  uses ShellDir.Manager;
 
 {$R *.dfm}
 
 procedure TFormMain.CheckBoxShowOnTaskbarClick(Sender: TObject);
 begin
   Application.MainFormOnTaskBar := CheckBoxShowOnTaskbar.Checked;
+  Manager.SetFormsOnTaskBar(Application.MainFormOnTaskBar);
+  //SetWindowLong(Handle, GWL_EXSTYLE, GetWindowLong(Handle, GWL_EXSTYLE) and not WS_EX_TOOLWINDOW);
+  //FMainForm.Perform(CM_RECREATEWND, 0, 0);
 end;
 
 procedure TFormMain.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -58,3 +63,4 @@ begin
 end;
 
 end.
+

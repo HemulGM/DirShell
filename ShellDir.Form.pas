@@ -3,8 +3,9 @@ unit ShellDir.Form;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, acPNG, Vcl.ExtCtrls, System.Generics.Collections, System.Generics.Defaults,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, acPNG,
+  Vcl.ExtCtrls, System.Generics.Collections, System.Generics.Defaults,
   System.ImageList, Vcl.ImgList, Direct2D, D2D1, Vcl.StdCtrls, HGM.Button,
   System.Win.TaskbarCore, Vcl.Taskbar, Winapi.Dwmapi;
 
@@ -14,8 +15,8 @@ type
     DisplayText: string;
     IconIndex: Integer;
   end;
-  TShellItems = class(TList<TShellItem>)
 
+  TShellItems = class(TList<TShellItem>)
   end;
 
   TBMPImages = TList<ID2D1Bitmap>;
@@ -29,12 +30,9 @@ type
     procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure FormActivate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
-    procedure FormMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure FormMouseWheelDown(Sender: TObject; Shift: TShiftState;
-      MousePos: TPoint; var Handled: Boolean);
-    procedure FormMouseWheelUp(Sender: TObject; Shift: TShiftState;
-      MousePos: TPoint; var Handled: Boolean);
+    procedure FormMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure FormMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
+    procedure FormMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
   private
     FVertOffset: Integer;
     FColCount: Integer;
@@ -70,7 +68,8 @@ var
 
 implementation
 
-uses Math, ShellDir.Manager, ShellApi;
+uses
+  Math, ShellDir.Manager, ShellApi;
 
 {$R *.dfm}
 
@@ -109,7 +108,8 @@ begin
 end;
 
 function TFormPanel.AddFile(FileName: string): Integer;
-var Item: TShellItem;
+var
+  Item: TShellItem;
 begin
   Item.FileName := FileName;
   Item.DisplayText := ExtractFileName(FileName);
@@ -119,15 +119,14 @@ begin
     function(const Left, Right: TShellItem): Integer
     begin
       Result := AnsiCompareStr(Left.DisplayText, Right.DisplayText);
-    end
-  ));
+    end));
 end;
 
 procedure TFormPanel.CreateParams(var Params: TCreateParams);
 begin
   inherited;
   Params.Style := Params.Style or WS_BORDER or WS_THICKFRAME;
-  Params.ExStyle := Params.ExStyle OR WS_EX_APPWINDOW;
+  Params.ExStyle := Params.ExStyle or WS_EX_APPWINDOW;
 end;
 
 procedure TFormPanel.WndProc(var Message: TMessage);
@@ -194,18 +193,17 @@ begin
   end;
 end;
 
-procedure TFormPanel.FormMouseMove(Sender: TObject; Shift: TShiftState; X,
-  Y: Integer);
+procedure TFormPanel.FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
   FMouseCord := TPoint.Create(X, Y);
   Repaint;
   if FItemUnderMouse >= 0 then
     Cursor := crHandPoint
-  else Cursor := crDefault;
+  else
+    Cursor := crDefault;
 end;
 
-procedure TFormPanel.FormMouseWheelDown(Sender: TObject; Shift: TShiftState;
-  MousePos: TPoint; var Handled: Boolean);
+procedure TFormPanel.FormMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
 begin
   Handled := True;
   FVertOffset := FVertOffset - 20;
@@ -213,8 +211,7 @@ begin
   Repaint;
 end;
 
-procedure TFormPanel.FormMouseWheelUp(Sender: TObject; Shift: TShiftState;
-  MousePos: TPoint; var Handled: Boolean);
+procedure TFormPanel.FormMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
 begin
   Handled := True;
   FVertOffset := FVertOffset + 20;
@@ -233,13 +230,13 @@ var
   PaintStruct: TPaintStruct;
 begin
   BeginPaint(Handle, PaintStruct);
-  with TDirect2DCanvas.Create(Canvas, ClientRect) do
+  with Canvas {TDirect2DCanvas.Create(Canvas, ClientRect)} do
   begin
-    BeginDraw;
-    RenderTarget.SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+    //BeginDraw;
+    //RenderTarget.SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
     FItemUnderMouse := -1;
-    Pen.Brush.Handle.SetOpacity(0.5);
-    for i := 0 to FItems.Count-1 do
+    //Pen.Brush.Handle.SetOpacity(0.5);
+    for i := 0 to FItems.Count - 1 do
     begin
       C := i mod FColCount;
       R := i div FColCount;
@@ -256,7 +253,7 @@ begin
         Brush.Style := bsSolid;
         Brush.Color := clWhite;
         Pen.Color := clWhite;
-        Brush.Handle.SetOpacity(0.2);
+        //Brush.Handle.SetOpacity(0.2);
         RoundRect(ItemRect, 2, 2);
       end;
 
@@ -264,10 +261,10 @@ begin
   //end;
   //with Canvas do
   //begin
-    Font.Name := 'Segoe UI Light';
-    Font.Size := 10;
-    Pen.Style := psClear;
-    Brush.Style := bsClear;
+      Font.Name := 'Segoe UI Light';
+      Font.Size := 10;
+      Pen.Style := psClear;
+      Brush.Style := bsClear;
     //for i := 0 to FItems.Count - 1 do
     //begin
     {  C := i mod FColCount;
@@ -305,19 +302,24 @@ begin
         //Brush.Handle.SetOpacity(1);
         RoundRect(TxtRect, 4, 4);
       end;  }
-
     //Font.Brush.Handle.SetOpacity(0.9);
-      TxtRect.Offset(+1, +1);
-      Font.Color := clBlack;
+      Font.Color := $00888888;
+      TxtRect.Offset(-1, 0);
+      TextRect(TxtRect, S, [tfVerticalCenter, tfWordBreak, tfCenter, tfEndEllipsis]);
+      TxtRect.Offset(+2, 0);
+      TextRect(TxtRect, S, [tfVerticalCenter, tfWordBreak, tfCenter, tfEndEllipsis]);
+      TxtRect.Offset(-1, -1);
+      TextRect(TxtRect, S, [tfVerticalCenter, tfWordBreak, tfCenter, tfEndEllipsis]);
+      TxtRect.Offset(0, +2);
       TextRect(TxtRect, S, [tfVerticalCenter, tfWordBreak, tfCenter, tfEndEllipsis]);
 
-      TxtRect.Offset(-1, -1);
+      TxtRect.Offset(0, -1);
     //Font.Brush.Handle.SetOpacity(1);
       Font.Color := clWhite;
       TextRect(TxtRect, S, [tfVerticalCenter, tfWordBreak, tfCenter, tfEndEllipsis]);
     end;
-    EndDraw;
-    Free;
+    //EndDraw;
+    //Free;
   end;
   EndPaint(Handle, PaintStruct);
 end;
@@ -347,7 +349,8 @@ end;
 
 procedure TFormPanel.UpdateGrid;
 begin
-  FVertOffset :=  Min(0, Max(FVertOffset, -((FItems.Count-1) div FColCount) * (IconHeight + IconSpaceH)));
+  FVertOffset := Min(0, Max(FVertOffset, -((FItems.Count - 1) div FColCount) * (IconHeight + IconSpaceH)));
 end;
 
 end.
+
