@@ -230,12 +230,12 @@ var
   PaintStruct: TPaintStruct;
 begin
   BeginPaint(Handle, PaintStruct);
-  with Canvas {TDirect2DCanvas.Create(Canvas, ClientRect)} do
+  with TDirect2DCanvas.Create(Canvas, ClientRect) do
   begin
-    //BeginDraw;
-    //RenderTarget.SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+    BeginDraw;
+    RenderTarget.SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
     FItemUnderMouse := -1;
-    //Pen.Brush.Handle.SetOpacity(0.5);
+    Pen.Brush.Handle.SetOpacity(0.5);
     for i := 0 to FItems.Count - 1 do
     begin
       C := i mod FColCount;
@@ -253,7 +253,7 @@ begin
         Brush.Style := bsSolid;
         Brush.Color := clWhite;
         Pen.Color := clWhite;
-        //Brush.Handle.SetOpacity(0.2);
+        Brush.Handle.SetOpacity(0.2);
         RoundRect(ItemRect, 2, 2);
       end;
 
@@ -318,8 +318,8 @@ begin
       Font.Color := clWhite;
       TextRect(TxtRect, S, [tfVerticalCenter, tfWordBreak, tfCenter, tfEndEllipsis]);
     end;
-    //EndDraw;
-    //Free;
+    EndDraw;
+    Free;
   end;
   EndPaint(Handle, PaintStruct);
 end;
